@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8">
+    <title>Home Page</title>
+  </head>
+  <body>
+    <h1>ペットの情報</h1>
+    <p>新しい画面です</p>
+    <form method="post" action="{{ url_for('register') }}">
+      <table border="1">
+        <tr>
+          <th>名前</th>
+          <th>生年月日</th>
+          <th>画像</th>
+        </tr>
+        <tr>
+          <td><input type="text" name="name"></td>
+          <td><input type="text" name="dob"></td>
+          <td><input type="text" name="image"></td>
+        </tr>
+      </table>
+      <br>
+      <input type="submit" value="登録"></imput>
+    </form>
+  </body>
+</html>

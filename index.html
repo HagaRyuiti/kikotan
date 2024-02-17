@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8">
+    <title>Home Page</title>
+  </head>
+  <body>
+    <h1>ペットの情報</h1>
+    <h2>ペット一覧</h2>
+    {% if pets == [] %}
+      <p>ペットが登録されていません</p>
+    {% else %}
+      {% for pets in pets %}
+        <p>名前: {{pets.name}}</p>
+        <p>生年月日: {{pets.dob}}</p>
+        <p>画像: {{pets.image}}</p>
+      {% endfor %}
+    {% endif %}
+    <a href="{{ url_for('sample') }}">編集</a>
+
+  </body>
+</html>
