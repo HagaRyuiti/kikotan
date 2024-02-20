@@ -1,20 +1,35 @@
 from flask import Flask, render_template, request, redirect, url_for
-import sqlite3
 import os
+import sqlite3
 
 app = Flask(__name__)
 
 # データベースの初期化
 def init_db():
     conn = sqlite3.connect('database.db')
-    c = conn.cursor()
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS uploads (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            text TEXT,
-            image_path TEXT
+    cursor = conn.cursor()
+
+    # ペットのテーブル
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS pets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        image_path TEXT,
+        name TEXT,
+        dob DATE
         )
     ''')
+
+    # 日記のテーブル
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS diaries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        image_path TEXT,
+        date DATE,
+        title TEXT,
+        content TEXT
+        )
+    ''')
+
     conn.commit()
     conn.close()
 
@@ -22,26 +37,33 @@ def init_db():
 init_db()
 
 # 画像を保存するフォルダの指定
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = os.path.join('static', 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# ルートページ
 @app.route('/')
-def index():
-    # データベースからデータを取得
+def home():
     conn = sqlite3.connect('database.db')
-    c = conn.cursor()
-    c.execute('SELECT * FROM uploads')
-    data = c.fetchall()
-    conn.close()
-    return render_template('index.html', data=data)
+    cursor = conn.cursor()
 
-# 画像のアップロード処理
-@app.route('/upload', methods=['POST'])
-def upload():
-    # フォームからテキストと画像を取得
-    text = request.form['text']
+    # ペット一覧を取得
+    cursor.execute('SELECT * FROM pets')
+    pets = cursor.fetchall()
+
+    # 日記一覧を取得
+    cursor.execute('SELECT * FROM diaries')
+    diaries = cursor.fetchall()
+
+
+    conn.close()
+
+    return render_template('index.html', pets=pets, diaries=diaries)
+
+
+@app.route('/add_pet', methods=['POST'])
+def add_pet():
     image = request.files['image']
+    name = request.form['petName']
+    dob = request.form['dob']
 
     # 画像を保存するパスを生成
     image_path = os.path.join(app.config['UPLOAD_FOLDER'], image.filename)
@@ -51,12 +73,35 @@ def upload():
 
     # データベースに保存
     conn = sqlite3.connect('database.db')
-    c = conn.cursor()
-    c.execute('INSERT INTO uploads (text, image_path) VALUES (?, ?)', (text, image_path))
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO pets (image_path, name, dob) VALUES (?, ?, ?)', (image_path, name, dob))
     conn.commit()
     conn.close()
 
-    return redirect(url_for('index'))
+    return redirect(url_for('home'))
+
+
+@app.route('/add_diary', methods=['POST'])
+def add_diary():
+        image = request.files['image']
+        date = request.form['date']
+        title = request.form['title']
+        content = request.form['content']
+
+        # 画像を保存するパスを生成
+        image_path = os.path.join(app.config['UPLOAD_FOLDER'], image.filename)
+
+         # 画像を指定のパスに保存
+        image.save(image_path)
+
+        # データベースに保存
+        conn = sqlite3.connect('database.db')
+        cursor = conn.cursor()
+        cursor.execute('INSERT INTO diaries (image_path, date, title, content) VALUES (?, ?, ?, ?)', (image_path, date, title, content))
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for('home'))
 
 if __name__ == '__main__':
     app.run(debug=True)
