@@ -4,75 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pet Diary</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-        }
-
-        header {
-            background-color: #333;
-            color: #fff;
-            text-align: center;
-            padding: 1em;
-        }
-
-        nav {
-            display: flex;
-            justify-content: center;
-            background-color: #555;
-            padding: 0.5em;
-        }
-
-            nav a {
-                color: #fff;
-                text-decoration: none;
-                margin: 0 1em;
-                font-weight: bold;
-            }
-
-        section {
-            max-width: 800px;
-            margin: 20px auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        form {
-            margin: 10px 0;
-        }
-
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        li {
-            margin-bottom: 10px;
-        }
-
-        button {
-            padding: 10px;
-            background-color: #4caf50;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-            button:hover {
-                background-color: #45a049;
-            }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='home.css') }}">
 </head>
 <body>
 
@@ -86,23 +18,30 @@
 
     <section id="homePage">
         <h2>Pet List</h2>
-        <ul id="petList"></ul>
+        <ul id="petList">
+
+        </ul>
         <button onclick="goToAddPetPage()">Add Pet</button>
     </section>
 
     <section id="addPetPage" style="display: none;">
         <h2>Add a New Pet</h2>
-        <form id="addPetForm">
-            <label>Photo: <input type="file" accept="image/*"></label><br>
-            <label>Name: <input type="text" name="petName" required></label><br>
-            <label>Date of Birth: <input type="date" name="dob" required></label><br>
+        <form id="addPetForm" action="{{ url_for('add_pet') }}" method="post" enctype="multipart/form-data">
+            <label for="petName">Pet Name:</label>
+            <input type="text" name="petName" required>
+            <label for="dob">Date of Birth:</label>
+            <input type="date" name="dob" required>
+            <label for="image">Image:</label>
+            <input type="file" name="image" accept="image/*" required>
             <button type="button" onclick="addPet()">Add</button>
         </form>
     </section>
 
     <section id="petDiaryPage" style="display: none;">
         <h2 id="petDiaryTitle"></h2>
-        <ul id="diaryList"></ul>
+        <ul id="diaryList">
+
+        </ul>
         <button onclick="goToAddDiaryPage()">Add Diary</button>
         <button onclick="goToHomePage()">Back</button>
         <button onclick="Del()">Delete</button>
@@ -112,21 +51,31 @@
 
     <section id="addDiaryPage" style="display: none;">
         <h2>Add a New Diary Entry</h2>
-        <form id="addDiaryForm">
-            <label>Photo: <input type="file" accept="image/*"></label><br>
-            <label>Date: <input type="date" name="diaryDate" required></label><br>
-            <label>Title: <input type="text" name="diaryTitle" required></label><br>
-            <label>Content: <textarea name="diaryContent" required></textarea></label><br>
+        <form id="addDiaryForm" action="{{ url_for('add_diary') }}" method="post" enctype="multipart/form-data">
+            <label for="pet_id">Select Pet:</label>
+            <select name="pet_id" required>
+                {% for pet in pets %}
+                    <option value="{{ pet[0] }}">{{ pet[2] }}</option>
+                {% endfor %}
+            </select>
+            <label for="date">Date:</label>
+            <input type="date" name="date" required>
+            <label for="title">Title:</label>
+            <input type="text" name="title" required>
+            <label for="content">Content:</label>
+            <textarea name="content" rows="4" required></textarea>
+            <label for="image">Image:</label>
+            <input type="file" name="image" accept="image/*" required>
             <button type="button" onclick="addDiary()">Add</button>
         </form>
     </section>
 
     <script>
         // ペット一覧
-        const pets = [];
+        const pet = { pets , tojson , safe };
 
         // 日記一覧
-        const diaries = {};
+        const diaries = { diary , tojson , safe };
 
         // HOMEページの初期化
         function initHomePage() {
@@ -152,7 +101,7 @@
             const dob = form.elements["dob"].value;
 
             pets.push({ name: petName, dob: dob });
-            initHomePage();
+            
             goToHomePage();
         }
 
