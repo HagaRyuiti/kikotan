@@ -19,20 +19,23 @@
     <section id="homePage">
         <h2>Pet List</h2>
         <ul id="petList">
-
+            {% for pet in pets %}
+            <li>
+                <img src="{{ pet[1] }}" alt="{{ pet[2] }}">
+                <p>Name: {{ pet[2] }}</p>
+                <p>DOB: {{ pet[3] }}</p>
+            </li>
+            {% endfor %}
         </ul>
         <button onclick="goToAddPetPage()">Add Pet</button>
     </section>
 
     <section id="addPetPage" style="display: none;">
         <h2>Add a New Pet</h2>
-        <form id="addPetForm" action="{{ url_for('add_pet') }}" method="post" enctype="multipart/form-data">
-            <label for="petName">Pet Name:</label>
-            <input type="text" name="petName" required>
-            <label for="dob">Date of Birth:</label>
-            <input type="date" name="dob" required>
-            <label for="image">Image:</label>
-            <input type="file" name="image" accept="image/*" required>
+        <form id="addPetForm" action="/add_pet" method="post" enctype="multipart/form-data">
+            <label>Photo: <input type="file" accept="image/*"></label><br>
+            <label>Name: <input type="text" name="petName" required></label><br>
+            <label>Date of Birth: <input type="date" name="dob" required></label><br>
             <button type="button" onclick="addPet()">Add</button>
         </form>
     </section>
@@ -40,7 +43,14 @@
     <section id="petDiaryPage" style="display: none;">
         <h2 id="petDiaryTitle"></h2>
         <ul id="diaryList">
-
+            {% for diary in diaries %}
+            <li>
+                <img src="{{ diary[1] }}" alt="{{ diary[3] }}">
+                <p>Date: {{ diary[2] }}</p>
+                <p>Title: {{ diary[3] }}</p>
+                <p>Content: {{ diary[4] }}</p>
+            </li>
+            {% endfor %}
         </ul>
         <button onclick="goToAddDiaryPage()">Add Diary</button>
         <button onclick="goToHomePage()">Back</button>
@@ -51,31 +61,21 @@
 
     <section id="addDiaryPage" style="display: none;">
         <h2>Add a New Diary Entry</h2>
-        <form id="addDiaryForm" action="{{ url_for('add_diary') }}" method="post" enctype="multipart/form-data">
-            <label for="pet_id">Select Pet:</label>
-            <select name="pet_id" required>
-                {% for pet in pets %}
-                    <option value="{{ pet[0] }}">{{ pet[2] }}</option>
-                {% endfor %}
-            </select>
-            <label for="date">Date:</label>
-            <input type="date" name="date" required>
-            <label for="title">Title:</label>
-            <input type="text" name="title" required>
-            <label for="content">Content:</label>
-            <textarea name="content" rows="4" required></textarea>
-            <label for="image">Image:</label>
-            <input type="file" name="image" accept="image/*" required>
+        <form id="addDiaryForm" action="/add_diary" method="post" enctype="multipart/form-data">
+            <label>Photo: <input type="file" accept="image/*"></label><br>
+            <label>Date: <input type="date" name="diaryDate" required></label><br>
+            <label>Title: <input type="text" name="diaryTitle" required></label><br>
+            <label>Content: <textarea name="diaryContent" required></textarea></label><br>
             <button type="button" onclick="addDiary()">Add</button>
         </form>
     </section>
 
     <script>
         // ペット一覧
-        const pet = { pets , tojson , safe };
+        const pets = [];
 
         // 日記一覧
-        const diaries = { diary , tojson , safe };
+        const diaries = {};
 
         // HOMEページの初期化
         function initHomePage() {
@@ -101,7 +101,7 @@
             const dob = form.elements["dob"].value;
 
             pets.push({ name: petName, dob: dob });
-            
+            initHomePage();
             goToHomePage();
         }
 
