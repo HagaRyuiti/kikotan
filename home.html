@@ -3,185 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pet Diary</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='home.css') }}">
+    <title>Pet Diary System</title>
 </head>
 <body>
 
-    <header>
-        <h1>Pet Diary</h1>
-    </header>
+<h1>Pet Diary System</h1>
 
-    <nav>
-        <a href="#" onclick="goToHomePage()">HOME</a>
-    </nav>
+<!-- Display Pets -->
+<h2>Pets</h2>
+<ul>
+    {% for pet in pets %}
+        <li>
+            <img src="{{ pet[1] }}" alt="{{ pet[2] }} Image" style="max-width: 100px; max-height: 100px;">
+            <strong>{{ pet[2] }}</strong> (DOB: {{ pet[3] }})
+            <ul>
+                <!-- Display Diaries for each Pet -->
+                {% for diary in diaries %}
+                    {% if diary[1] == pet[0] %}
+                        <li>
+                            <img src="{{ diary[2] }}" alt="{{ diary[4] }} Image" style="max-width: 50px; max-height: 50px;">
+                            <strong>{{ diary[4] }}</strong> ({{ diary[3] }})
+                            <p>{{ diary[5] }}</p>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </li>
+    {% endfor %}
+</ul>
 
-    <section id="homePage">
-        <h2>Pet List</h2>
-        <ul id="petList">
-            {% for pet in pets %}
-            <li>
-                <img src="{{ pet[1] }}" alt="{{ pet[2] }}">
-                <p>Name: {{ pet[2] }}</p>
-                <p>DOB: {{ pet[3] }}</p>
-            </li>
-            {% endfor %}
-        </ul>
-        <button onclick="goToAddPetPage()">Add Pet</button>
-    </section>
+<!-- Add Pet Form -->
+<h2>Add Pet</h2>
+<form action="{{ url_for('add_pet') }}" method="post" enctype="multipart/form-data">
+    <label for="petName">Pet Name:</label>
+    <input type="text" name="petName" required>
+    <label for="dob">Date of Birth:</label>
+    <input type="date" name="dob" required>
+    <label for="image">Image:</label>
+    <input type="file" name="image" accept="image/*" required>
+    <button type="submit">Add Pet</button>
+</form>
 
-    <section id="addPetPage" style="display: none;">
-        <h2>Add a New Pet</h2>
-        <form id="addPetForm" action="/add_pet" method="post" enctype="multipart/form-data">
-            <label>Photo: <input type="file" accept="image/*"></label><br>
-            <label>Name: <input type="text" name="petName" required></label><br>
-            <label>Date of Birth: <input type="date" name="dob" required></label><br>
-            <button type="button" onclick="addPet()">Add</button>
-        </form>
-    </section>
-
-    <section id="petDiaryPage" style="display: none;">
-        <h2 id="petDiaryTitle"></h2>
-        <ul id="diaryList">
-            {% for diary in diaries %}
-            <li>
-                <img src="{{ diary[1] }}" alt="{{ diary[3] }}">
-                <p>Date: {{ diary[2] }}</p>
-                <p>Title: {{ diary[3] }}</p>
-                <p>Content: {{ diary[4] }}</p>
-            </li>
-            {% endfor %}
-        </ul>
-        <button onclick="goToAddDiaryPage()">Add Diary</button>
-        <button onclick="goToHomePage()">Back</button>
-        <button onclick="Del()">Delete</button>
-    </section>
-
-    
-
-    <section id="addDiaryPage" style="display: none;">
-        <h2>Add a New Diary Entry</h2>
-        <form id="addDiaryForm" action="/add_diary" method="post" enctype="multipart/form-data">
-            <label>Photo: <input type="file" accept="image/*"></label><br>
-            <label>Date: <input type="date" name="diaryDate" required></label><br>
-            <label>Title: <input type="text" name="diaryTitle" required></label><br>
-            <label>Content: <textarea name="diaryContent" required></textarea></label><br>
-            <button type="button" onclick="addDiary()">Add</button>
-        </form>
-    </section>
-
-    <script>
-        // ペット一覧
-        const pets = [];
-
-        // 日記一覧
-        const diaries = {};
-
-        // HOMEページの初期化
-        function initHomePage() {
-            const petList = document.getElementById("petList");
-            petList.innerHTML = "";
-            pets.forEach(pet => {
-                const listItem = document.createElement("li");
-                listItem.innerHTML = `<a href="#" onclick="goToPetDiaryPage('${pet.name}')">${pet.name}</a>`;
-                petList.appendChild(listItem);
-            });
-        }
-
-        // ペット追加ページへの遷移
-        function goToAddPetPage() {
-            document.getElementById("homePage").style.display = "none";
-            document.getElementById("addPetPage").style.display = "block";
-        }
-
-        // ペットの追加
-        function addPet() {
-            const form = document.getElementById("addPetForm");
-            const petName = form.elements["petName"].value;
-            const dob = form.elements["dob"].value;
-
-            pets.push({ name: petName, dob: dob });
-            initHomePage();
-            goToHomePage();
-        }
-
-        // ペット日記ページへの遷移
-        function goToPetDiaryPage(petName) {
-            const petDiaryPage = document.getElementById("petDiaryPage");
-            petDiaryPage.style.display = "block";
-
-            const petDiaryTitle = document.getElementById("petDiaryTitle");
-            petDiaryTitle.textContent = petName;
-
-            const diaryList = document.getElementById("diaryList");
-            diaryList.innerHTML = "";
-
-            if (diaries[petName]) {
-                diaries[petName].forEach(diary => {
-                    const listItem = document.createElement("li");
-                    listItem.innerHTML = `<a href="#" onclick="goToDiary('${petName}', '${diary.date}')">${diary.date} - ${diary.title}</a>`;
-                    diaryList.appendChild(listItem);
-                });
-            }
-        }
-
-        // HOMEページへの遷移
-        function goToHomePage() {
-            document.getElementById("homePage").style.display = "block";
-            document.getElementById("addPetPage").style.display = "none";
-            document.getElementById("petDiaryPage").style.display = "none";
-            document.getElementById("addDiaryPage").style.display = "none";
-        }
-
-        // 日記追加ページへの遷移
-        function goToAddDiaryPage() {
-            document.getElementById("petDiaryPage").style.display = "none";
-            document.getElementById("addDiaryPage").style.display = "block";
-        }
-
-        // 日記の追加
-        function addDiary() {
-            const form = document.getElementById("addDiaryForm");
-            const petName = document.getElementById("petDiaryTitle").textContent;
-            const date = form.elements["diaryDate"].value;
-            const title = form.elements["diaryTitle"].value;
-            const content = form.elements["diaryContent"].value;
-
-            if (!diaries[petName]) {
-                diaries[petName] = [];
-            }
-
-            diaries[petName].push({ date: date, title: title, content: content });
-            goToPetDiaryPage(petName);
-        }
-
-        // 日記の削除
-        function Del() {
-            // ペット名と日付を取得
-            const petName = document.getElementById("petDiaryTitle").textContent;
-            const date = prompt("削除したい日記の日付を入力してください:(yyyy-mm-dd)");
-
-            // 日記エントリを検索して削除
-            const diaryIndex = diaries[petName].findIndex(diary => diary.date === date);
-            if (diaryIndex !== -1) {
-                diaries[petName].splice(diaryIndex, 1);
-                alert("日記が削除されました。");
-            } else {
-                alert("該当する日記が見つかりませんでした。");
-            }
-
-            // ペット日記ページを再表示
-            goToPetDiaryPage(petName);
-        }
-
-        // 日記閲覧ページへの遷移
-        function goToDiary(petName, date) {
-            const diary = diaries[petName].find(d => d.date === date);
-            if (diary) {
-                alert(`日付: ${diary.date}\nタイトル: ${diary.title}\n本文: ${diary.content}`);
-            }
-        }
-    </script>
+<!-- Add Diary Form -->
+<h2>Add Diary</h2>
+<form action="{{ url_for('add_diary') }}" method="post" enctype="multipart/form-data">
+    <label for="pet_id">Select Pet:</label>
+    <select name="pet_id" required>
+        {% for pet in pets %}
+            <option value="{{ pet[0] }}">{{ pet[2] }}</option>
+        {% endfor %}
+    </select>
+    <label for="date">Date:</label>
+    <input type="date" name="date" required>
+    <label for="title">Title:</label>
+    <input type="text" name="title" required>
+    <label for="content">Content:</label>
+    <textarea name="content" rows="4" required></textarea>
+    <label for="image">Image:</label>
+    <input type="file" name="image" accept="image/*" required>
+    <button type="submit">Add Diary</button>
+</form>
 
 </body>
 </html>

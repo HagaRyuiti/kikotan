@@ -125,4 +125,3 @@ def add_diary():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
