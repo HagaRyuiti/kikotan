@@ -23,15 +23,28 @@ def init_db():
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS diaries (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        pet_id INTEGER,
         image_path TEXT,
         date DATE,
         title TEXT,
-        content TEXT
+        content TEXT,
+        FOREIGN KEY (pet_id) REFERENCES pets (id)
+        )
+    ''')
+
+    # ペットと日記の関連テーブル
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS pet_diary_relation (
+        pet_id INTEGER,
+        diary_id INTEGER,
+        FOREIGN KEY (pet_id) REFERENCES pets (id),
+        FOREIGN KEY (diary_id) REFERENCES diaries (id)
         )
     ''')
 
     conn.commit()
     conn.close()
+
 
 # 初期化関数を実行
 init_db()
@@ -56,7 +69,7 @@ def home():
 
     conn.close()
 
-    return render_template('index.html', pets=pets, diaries=diaries)
+    return render_template('home.html', pets=pets, diaries=diaries)
 
 
 @app.route('/add_pet', methods=['POST'])
@@ -71,37 +84,45 @@ def add_pet():
     # 画像を指定のパスに保存
     image.save(image_path)
 
-    # データベースに保存
+    # データベースにペットを保存
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
     cursor.execute('INSERT INTO pets (image_path, name, dob) VALUES (?, ?, ?)', (image_path, name, dob))
+    pet_id = cursor.lastrowid  # Get the ID of the newly inserted pet
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for('home'))
+
+@app.route('/add_diary', methods=['POST'])
+def add_diary():
+    image = request.files['image']
+    date = request.form['date']
+    title = request.form['title']
+    content = request.form['content']
+    pet_id = request.form['pet_id']  # Get the pet ID from the form
+
+    # 画像を保存するパスを生成
+    image_path = os.path.join(app.config['UPLOAD_FOLDER'], image.filename)
+
+    # 画像を指定のパスに保存
+    image.save(image_path)
+
+    # データベースに日記を保存
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO diaries (pet_id, image_path, date, title, content) VALUES (?, ?, ?, ?, ?)',
+                   (pet_id, image_path, date, title, content))
+    diary_id = cursor.lastrowid  # Get the ID of the newly inserted diary
+
+    # ペットと日記の関連を保存
+    cursor.execute('INSERT INTO pet_diary_relation (pet_id, diary_id) VALUES (?, ?)', (pet_id, diary_id))
     conn.commit()
     conn.close()
 
     return redirect(url_for('home'))
 
 
-@app.route('/add_diary', methods=['POST'])
-def add_diary():
-        image = request.files['image']
-        date = request.form['date']
-        title = request.form['title']
-        content = request.form['content']
-
-        # 画像を保存するパスを生成
-        image_path = os.path.join(app.config['UPLOAD_FOLDER'], image.filename)
-
-         # 画像を指定のパスに保存
-        image.save(image_path)
-
-        # データベースに保存
-        conn = sqlite3.connect('database.db')
-        cursor = conn.cursor()
-        cursor.execute('INSERT INTO diaries (image_path, date, title, content) VALUES (?, ?, ?, ?)', (image_path, date, title, content))
-        conn.commit()
-        conn.close()
-
-        return redirect(url_for('home'))
-
 if __name__ == '__main__':
     app.run(debug=True)
+
