@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 import os
 import sqlite3
 
@@ -66,15 +66,25 @@ def home():
     cursor.execute('SELECT * FROM diaries')
     diaries = cursor.fetchall()
 
-
+    # データベース接続を閉じるのはここではなく、全体の処理が終わった後に行うべき
     conn.close()
 
-    return render_template('home.html', pets=pets, diaries=diaries)
+    # ペットごとに日記を整理するためのデータ構造
+    pet_diaries = {}
+    for pet in pets:
+        pet_diaries[pet[2]] = []
+
+    for diary in diaries:
+        pet_diaries[diary[1]].append(diary)
+
+    # ペットと対応する日記データをテンプレートに渡す
+    return render_template('home.html', pets=pets, pet_diaries=pet_diaries)
+
 
 
 @app.route('/add_pet', methods=['POST'])
 def add_pet():
-    image = request.files['image']
+    image = request.files['photo']
     name = request.form['petName']
     dob = request.form['dob']
 
@@ -96,7 +106,7 @@ def add_pet():
 
 @app.route('/add_diary', methods=['POST'])
 def add_diary():
-    image = request.files['image']
+    image = request.files['photo']
     date = request.form['date']
     title = request.form['title']
     content = request.form['content']
@@ -121,6 +131,8 @@ def add_diary():
     conn.close()
 
     return redirect(url_for('home'))
+
+    
 
 
 if __name__ == '__main__':
