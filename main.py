@@ -69,16 +69,9 @@ def home():
     # データベース接続を閉じるのはここではなく、全体の処理が終わった後に行うべき
     conn.close()
 
-    # ペットごとに日記を整理するためのデータ構造
-    pet_diaries = {}
-    for pet in pets:
-        pet_diaries[pet[2]] = []
 
-    for diary in diaries:
-        pet_diaries[diary[1]].append(diary)
-
-    # ペットと対応する日記データをテンプレートに渡す
-    return render_template('home.html', pets=pets, pet_diaries=pet_diaries)
+    # ペットデータをJSON形式で返す
+    return jsonify('home.html', {'pets': pets})
 
 
 
@@ -137,4 +130,3 @@ def add_diary():
 
 if __name__ == '__main__':
     app.run(debug=True)
-

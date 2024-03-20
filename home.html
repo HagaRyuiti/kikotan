@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pet Diary</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='home.css') }}">
+    <link rel="stylesheet" href="../static/style.css">
 </head>
 <body>
 
@@ -18,50 +18,34 @@
 
     <section id="homePage">
         <h2>Pet List</h2>
-        <ul id="petList">
-            {% for pet in pets %}
-            <li><img src="{{ pet[1] }}" alt="{{ pet[2] }} Image" style="max-width: 100px; max-height: 100px;">
-                <strong>{{ pet[2] }}</strong> (DOB: {{ pet[3] }})<button href="#" onclick="goToPetDiaryPage('{{ pet[2] }}')">Add Diary</button></li>
-            {% endfor %}
-        </ul>
+        <ul id="petList"></ul>
         <button onclick="goToAddPetPage()">Add Pet</button>
-        <div id="petData" data-pets="{{ pets | tojson | safe }}"></div>
-        <div id="diariesData" data-diaries="{{ pet_diaries | tojson | safe }}"></div>
-
     </section>
 
     <section id="addPetPage" style="display: none;">
         <h2>Add a New Pet</h2>
         <form id="addPetForm">
-            <label>Photo: <input type="file" accept="image/*" name="photo"></label><br>
+            <label>Photo: <input type="file" accept="image/*"></label><br>
             <label>Name: <input type="text" name="petName" required></label><br>
             <label>Date of Birth: <input type="date" name="dob" required></label><br>
             <button type="button" onclick="addPet()">Add</button>
         </form>
     </section>
 
-    {% for pet, diaries in pet_diaries.items() %}
-        <section id="{{ pet }}DiaryPage" style="display: none;">
-            <h2 id="{{ pet }}DiaryTitle">{{ pet }}</h2>
-            <ul id="{{ pet }}DiaryList">
-                {% for diary in diaries %}
-                    <li>
-                        <img src="{{ diary[2] }}" alt="{{ diary[4] }} Image" style="max-width: 50px; max-height: 50px;">
-                        <strong>{{ diary[4] }}</strong> ({{ diary[3] }})
-                        <p>{{ diary[5] }}</p>
-                    </li>
-                {% endfor %}
-            </ul>
-            <button onclick="goToAddDiaryPage()">Add Diary</button>
-            <button onclick="goToHomePage()">Back</button>
-            <button onclick="Del()">Delete</button>
-        </section>
-    {% endfor %}
+    <section id="petDiaryPage" style="display: none;">
+        <h2 id="petDiaryTitle"></h2>
+        <ul id="diaryList"></ul>
+        <button onclick="goToAddDiaryPage()">Add Diary</button>
+        <button onclick="goToHomePage()">Back</button>
+        <button onclick="Del()">Delete</button>
+    </section>
+
+    
 
     <section id="addDiaryPage" style="display: none;">
         <h2>Add a New Diary Entry</h2>
         <form id="addDiaryForm">
-            <label>Photo: <input type="file" accept="image/*" name="file"></label><br>
+            <label>Photo: <input type="file" accept="image/*"></label><br>
             <label>Date: <input type="date" name="diaryDate" required></label><br>
             <label>Title: <input type="text" name="diaryTitle" required></label><br>
             <label>Content: <textarea name="diaryContent" required></textarea></label><br>
@@ -70,15 +54,29 @@
     </section>
 
     <script>
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // ペットデータを取得する関数
+            function getPetsData() {
+                fetch('/pets_data')
+                    .then(response => response.json())
+                    .then(data => {
+                        // 取得したデータを使って処理を行う
+                        const pets = data.pets;
+                        console.log(pets); // ペットデータをログに出力するなど
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+
+            // ページ読み込み時にペットデータを取得
+            getPetsData();
+        });
+
         // ペット一覧
-        var petDataElement = document.getElementById("petData");
-        var pets = JSON.parse(petDataElement.getAttribute("data-pets"));
-        console.log(pets);
+        const pets = [];
 
         // 日記一覧
-        var diariesDataElement = document.getElementById("diariesData");
-        var diaries = JSON.parse(diariesDataElement.getAttribute("data-diaries"));
-        console.log(diaries);
+        const diaries = {};
 
         // HOMEページの初期化
         function initHomePage() {
@@ -129,35 +127,23 @@
 
         // ペット日記ページへの遷移
         function goToPetDiaryPage(petName) {
-            const petDiaryPage = document.getElementById(`${petName}DiaryPage`);
+            const petDiaryPage = document.getElementById("petDiaryPage");
             petDiaryPage.style.display = "block";
 
-            const petDiaryTitle = document.getElementById(`${petName}DiaryTitle`);
+            const petDiaryTitle = document.getElementById("petDiaryTitle");
             petDiaryTitle.textContent = petName;
-
-            // diariesData要素からJSONデータを取得
-            const diariesDataElement = document.getElementById("diariesData");
-            const diariesData = JSON.parse(diariesDataElement.getAttribute("data-diaries"));
 
             const diaryList = document.getElementById("diaryList");
             diaryList.innerHTML = "";
 
-            // ペットの日記が存在する場合にのみ日記を表示
-            if (diariesData[petName]) {
-                diariesData[petName].forEach(diary => {
+            if (diaries[petName]) {
+                diaries[petName].forEach(diary => {
                     const listItem = document.createElement("li");
-                    listItem.innerHTML = `
-                        <img src="${diary.image_path}" alt="${diary.title} Image" style="max-width: 50px; max-height: 50px;">
-                        <strong>${diary.title}</strong> (${diary.date})
-                        <p>${diary.content}</p>
-                    `;
+                    listItem.innerHTML = `<a href="#" onclick="goToDiary('${petName}', '${diary.date}')">${diary.date} - ${diary.title}</a>`;
                     diaryList.appendChild(listItem);
                 });
             }
         }
-
-
-
 
         // HOMEページへの遷移
         function goToHomePage() {
@@ -176,35 +162,18 @@
         // 日記の追加
         function addDiary() {
             const form = document.getElementById("addDiaryForm");
-            const photo = form.elements["file"].files[0]; // 修正: "photo" を "file" に変更
+            const petName = document.getElementById("petDiaryTitle").textContent;
             const date = form.elements["diaryDate"].value;
             const title = form.elements["diaryTitle"].value;
             const content = form.elements["diaryContent"].value;
-            const pet_id = document.getElementById("petDiaryTitle").textContent; // Assuming you have a pet name available
 
-            // FormDataオブジェクトを作成し、データを追加
-            const formData = new FormData();
-            formData.append("photo", photo);
-            formData.append("date", date);
-            formData.append("title", title);
-            formData.append("content", content);
-            formData.append("pet_id", pet_id);
+            if (!diaries[petName]) {
+                diaries[petName] = [];
+            }
 
-            // Fetch APIを使用してPythonにデータを送信
-            fetch('/add_diary', {
-                method: 'POST',
-                body: formData
-            })
-            .then(() => {
-                console.log('Success: Diary added');
-                goToPetDiaryPage(pet_id);  // Redirect to the pet diary page using pet_id
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+            diaries[petName].push({ date: date, title: title, content: content });
+            goToPetDiaryPage(petName);
         }
-
-
 
         // 日記の削除
         function Del() {
